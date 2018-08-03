@@ -83,14 +83,15 @@ def run_attributes(checkpoint_path, filenames, num_divisions):
                         "image_feed:0": image_bytes,
                         "word_feed:0": [i for i in range(
                             i*partition_size, (i + 1)*partition_size)]}).tolist())
-            topk.append(np.argsort(probabilities)[-10:][::-1])
+            topk.append([np.argsort(probabilities)[-10:][::-1], probabilities])
 
     run_results = []
     for i, k in enumerate(topk):
-        run_results.append({"filename": filenames[i], "topk": ""})
+        k, p = k
+        run_results.append({"filename": filenames[i], "words": "", "topk": k, "probabilities": p})
         sentence = [vocab.id_to_word(w) for w in k]
         sentence = ", ".join(sentence)
-        run_results[i]["topk"] = sentence
+        run_results[i]["words"] = sentence
                 
     return run_results
 
@@ -112,7 +113,7 @@ def main(_):
     attributes = run_attributes(checkpoint_path, filenames, FLAGS.num_divisions)
     for single_attribute in attributes:
         print("Attributes for image %s:" % os.path.basename(single_attribute["filename"]))
-        print("    %s " % (single_attribute["topk"]))
+        print("    %s " % (single_attribute["words"]))
 
 if __name__ == "__main__":
     tf.app.run()
